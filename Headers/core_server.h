@@ -18,7 +18,7 @@
 #define SERVER_NAME "[SERVER]"
 
 #define SERVER_MAJOR 0
-#define SERVER_MINOR 1
+#define SERVER_MINOR 2
 #define SERVER_PATCH 0
 
 typedef struct {
