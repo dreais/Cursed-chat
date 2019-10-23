@@ -24,8 +24,8 @@ static int server_socket_initialize(serv_core_t *server)
 
 	server->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (server->sock < 0) {
-		output_logs_str(PREFIX_ERROR, "Server socket couldn't open, exiting.\n");
-		exit(1);
+		output_logs_str(PREFIX_ERROR, "Server socket couldn't open, returning.\n");
+		return(1);
 	}
 	output_logs_str(PREFIX_INFO, "Server socket opened at %d\n", server->sock);
 	setsockopt(server->sock, SOL_SOCKET, SO_REUSEADDR, (char *) &optval, sizeof(int));
@@ -33,20 +33,33 @@ static int server_socket_initialize(serv_core_t *server)
 	server->name = (struct sockaddr_in) {.sin_family = AF_INET, .sin_port = htons(LOCAL_PORT)};
 	bind(server->sock, (struct sockaddr *) &server->name, sizeof(struct sockaddr_in));
 	inet_pton(2, LOCAL_HOST, (char *) &server->name.sin_addr);
-	listen(server->sock, 1);
+	listen(server->sock, ACCEPTED_BACKLOG);
 	return 0;
 }
 
 int server_startup(void)
 {
 	serv_core_t server;
+	int result = 0;
 
 	winsock_initialize();
-	server_socket_initialize(&server);
+	result = server_socket_initialize(&server);
+	if (result > 0) {
+		output_logs_str(PREFIX_ERROR, "server_socket_initialize failed and returned %d. Exiting.\n", result);
+		exit(result);
+	}
+	result = create_poll(&server);
+	if (result > 0) {
+		output_logs_str(PREFIX_ERROR, "create_poll failed and returned %d. Exiting.\n", result);
+		exit(result);
+	}
+	server_shutdown(&server);
+	return result;
 }
 
 int server_shutdown(serv_core_t *server)
 {
+	output_logs_str(PREFIX_INFO, "Server closing..\n");
 	shutdown(server->sock, 2);
 	close(server->sock);
 }
