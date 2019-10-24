@@ -3,6 +3,10 @@
 //
 
 #include <stdlib.h>
+#include <string.h>
+#include <poll.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include "../../Headers/core_server.h"
 
 int create_poll(serv_core_t *server)
@@ -31,5 +35,23 @@ int create_poll(serv_core_t *server)
 	new.fds[0].fd = server->sock;
 	new.fds[0].events = POLLIN;
 	server->fd_pool = new;
+	return 0;
+}
+
+int pollc_push_back(poll_collect_t *pollc, client_socket new)
+{
+	char *new_addr = inet_ntoa(new.socket_name.sin_addr);
+
+	if (new_addr == NULL) {
+		return 1;
+	}
+	pollc->fds_n++;
+	pollc->name = realloc(pollc->name, sizeof(char *) * (pollc->fds_n + 1));
+	pollc->name[pollc->fds_n - 1] = strdup(new_addr);
+
+	pollc->fds = realloc(pollc->fds, sizeof(struct pollfd) * pollc->fds_n);
+	pollc->fds[pollc->fds_n - 1].fd = new.fd;
+	pollc->fds[pollc->fds_n - 1].events = POLLIN;
+	write(pollc->fds[pollc->fds_n - 1].fd, CONNECTION_SUCCESSFUL, strlen(CONNECTION_SUCCESSFUL));
 	return 0;
 }
