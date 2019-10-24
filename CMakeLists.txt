@@ -6,3 +6,7 @@ IF (WIN32)
     target_link_libraries(cursed_chat wsock32 ws2_32)
     target_compile_options(cursed_chat PRIVATE -D_WIN32_WINNT=0x0600)
 ENDIF (WIN32)
+
+IF(UNIX)
+    target_compile_options(cursed_chat PRIVATE -Wall -Wextra -g -O0)
+ENDIF(UNIX)

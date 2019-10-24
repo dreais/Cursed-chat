@@ -43,6 +43,7 @@ static void append_buffer(char *buff, int buff_size, char type[4], va_list *arg_
 	}
 }
 
+extern void output_logs_str(const char prefix[], const char str[], ...) __attribute__((format(printf,2, 3)));
 void output_logs_str(const char prefix[], const char str[], ...)
 {
 	va_list arg_list;
