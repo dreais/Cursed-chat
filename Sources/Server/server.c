@@ -2,9 +2,16 @@
 // Created by Valentin on 10/24/2019.
 //
 
-#include <io.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <poll.h>
 #include "../../Headers/core_server.h"
 
+#ifdef _WIN32 // winsock_initialize for windows
 static int winsock_initialize(void)
 {
 	WSADATA wsa_data;
@@ -17,6 +24,7 @@ static int winsock_initialize(void)
 	}
 	return result;
 }
+#endif
 
 static int server_socket_initialize(serv_core_t *server)
 {
@@ -32,8 +40,42 @@ static int server_socket_initialize(serv_core_t *server)
 	memset((char *) &server->name, 0, sizeof(struct sockaddr_in));
 	server->name = (struct sockaddr_in) {.sin_family = AF_INET, .sin_port = htons(LOCAL_PORT)};
 	bind(server->sock, (struct sockaddr *) &server->name, sizeof(struct sockaddr_in));
+#ifdef _WIN32
 	inet_pton(2, LOCAL_HOST, (char *) &server->name.sin_addr);
+#else
+	inet_aton(LOCAL_HOST, &server->name.sin_addr);
+#endif
 	listen(server->sock, ACCEPTED_BACKLOG);
+	server->stop_server = false;
+	return 0;
+}
+
+static int handle_socket(serv_core_t *server)
+{
+	client_socket new;
+	int result;
+
+	if (server->fd_pool.fds[0].revents & POLLIN) { // data is ready to read from the server
+		new.fd = accept(server->fd_pool.fds[0].fd, (struct sockaddr *) &new.socket_name, &new.addr_len);
+		result = pollc_push_back(&server->fd_pool, new);
+	}
+	return 0;
+}
+
+static int run_server(serv_core_t *server)
+{
+	int ret_value;
+
+	while (server->stop_server == false) {
+		ret_value = poll(server->fd_pool.fds, server->fd_pool.fds_n, 5);
+		if (ret_value == -1) {
+			output_logs_str(PREFIX_ERROR, "Poll failed, returning %d.\n", ret_value);
+			return ret_value;
+		}
+		if (ret_value > 0) {
+			ret_value = handle_socket(server);
+		}
+	}
 	return 0;
 }
 
@@ -42,7 +84,9 @@ int server_startup(void)
 	serv_core_t server;
 	int result = 0;
 
+#ifdef _WIN32
 	winsock_initialize();
+#endif
 	result = server_socket_initialize(&server);
 	if (result > 0) {
 		output_logs_str(PREFIX_ERROR, "server_socket_initialize failed and returned %d. Exiting.\n", result);
@@ -53,6 +97,7 @@ int server_startup(void)
 		output_logs_str(PREFIX_ERROR, "create_poll failed and returned %d. Exiting.\n", result);
 		exit(result);
 	}
+	result = run_server(&server);
 	server_shutdown(&server);
 	return result;
 }
@@ -62,4 +107,5 @@ int server_shutdown(serv_core_t *server)
 	output_logs_str(PREFIX_INFO, "Server closing..\n");
 	shutdown(server->sock, 2);
 	close(server->sock);
+	return 0;
 }

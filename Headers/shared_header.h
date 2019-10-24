@@ -5,6 +5,8 @@
 #ifndef CURSED_CHAT_SHARED_HEADER_H
 #define CURSED_CHAT_SHARED_HEADER_H
 
+#ifdef _WIN32 /// WINDOWS PROTOTYPES
 int inet_pton(int af, const char *src, char *dst);
+#endif
 
 #endif //CURSED_CHAT_SHARED_HEADER_H

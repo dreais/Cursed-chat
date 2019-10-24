@@ -3,6 +3,8 @@
 //
 
 #include <stdlib.h>
+#include <string.h>
+#include <poll.h>
 #include "../../Headers/core_server.h"
 
 int create_poll(serv_core_t *server)
@@ -31,5 +33,11 @@ int create_poll(serv_core_t *server)
 	new.fds[0].fd = server->sock;
 	new.fds[0].events = POLLIN;
 	server->fd_pool = new;
+	return 0;
+}
+
+int pollc_push_back(poll_collect_t *pollc, client_socket new)
+{
+
 	return 0;
 }

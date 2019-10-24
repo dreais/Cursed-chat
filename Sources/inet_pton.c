@@ -2,7 +2,9 @@
 // Created by Valentin on 10/24/2019.
 //
 
+#ifdef _WIN32
 #include <stdint.h>
+#include <string.h>
 #include <winsock2.h>
 
 #define NS_INADDRSZ  4
@@ -136,3 +138,4 @@ int inet_pton(int af, const char *src, char *dst)
 			return -1;
 	}
 }
+#endif
