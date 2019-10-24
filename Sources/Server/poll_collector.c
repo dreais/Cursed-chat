@@ -55,3 +55,11 @@ int pollc_push_back(poll_collect_t *pollc, client_socket new)
 	write(pollc->fds[pollc->fds_n - 1].fd, CONNECTION_SUCCESSFUL, strlen(CONNECTION_SUCCESSFUL));
 	return 0;
 }
+
+int read_data(int sender, char *buffer)
+{
+	int ret_value = 0;
+
+	ret_value = recv(sender, buffer, BUFFER_SIZE, MSG_DONTWAIT);
+	return ret_value;
+}

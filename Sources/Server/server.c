@@ -29,7 +29,7 @@ static int winsock_initialize(void)
 
 static bool emergency_stop = false;
 
-static void handle_sigint(int sig)
+static void handle_sigint(int sig __attribute__((unused)))
 {
 	output_logs_str(PREFIX_ERROR, "Got a SIGINT signal - emergency stop.\n");
 	fprintf(stderr, "Stopping server\n");
@@ -64,12 +64,28 @@ static int handle_socket(serv_core_t *server)
 {
 	client_socket new;
 	int result = 0;
+	char buffer[BUFFER_SIZE];
 
 	if (server->fd_pool.fds[0].revents & POLLIN) { // data is ready to read from the server
 		new.fd = accept(server->fd_pool.fds[0].fd, (struct sockaddr *) &new.socket_name, &new.addr_len);
 		result = pollc_push_back(&server->fd_pool, new);
-		output_logs_str(PREFIX_DEBUG, "New connection on %s\n.", server->fd_pool.name[server->fd_pool.fds_n - 1]);
+		output_logs_str(PREFIX_DEBUG, "New connection on %s.\n", server->fd_pool.name[server->fd_pool.fds_n - 1]);
 		return result;
+	}
+	for (unsigned int i = 0; i < server->fd_pool.fds_n; i++) {
+		if (server->fd_pool.fds[i].revents & POLLIN) {
+			printf("%sGot data from %s\n", SERVER_NAME, server->fd_pool.name[i]);
+			result = read_data(server->fd_pool.fds[i].fd, buffer);
+			if (result == -1) {
+				output_logs_str(PREFIX_ERROR, "Recv couldn't receive message. Returning with %d.\n", result);
+				return result;
+			} else if (result == 0) {
+				output_logs_str(PREFIX_WARNING, "Client disconnected.\n");
+				return result;
+			}
+			printf("%sMessage received: %s\n", SERVER_NAME, buffer);
+			memset(&buffer, '\0', BUFFER_SIZE);
+		}
 	}
 	return result;
 }
@@ -86,6 +102,10 @@ static int run_server(serv_core_t *server)
 		}
 		if (ret_value > 0) {
 			ret_value = handle_socket(server);
+		}
+		if (ret_value < 0) {
+			output_logs_str(PREFIX_ERROR, "Got an error, code %d.\n", ret_value);
+			return ret_value;
 		}
 	}
 	if (emergency_stop == true) {
