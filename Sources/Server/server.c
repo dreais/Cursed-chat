@@ -29,7 +29,7 @@ static int winsock_initialize(void)
 
 static bool emergency_stop = false;
 
-static void handle_sigint(int sig)
+static void handle_sigint(int sig __attribute__((unused)))
 {
 	output_logs_str(PREFIX_ERROR, "Got a SIGINT signal - emergency stop.\n");
 	fprintf(stderr, "Stopping server\n");
