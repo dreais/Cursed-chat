@@ -31,8 +31,9 @@
 #define LOCAL_PORT 10001
 
 #define ACCEPTED_BACKLOG 1
+#define BUFFER_SIZE 256
 
-#define SERVER_NAME "[SERVER]"
+#define SERVER_NAME "[SERVER] "
 
 // versions
 #define SERVER_MAJOR 0
@@ -75,6 +76,7 @@ typedef struct {
 
 int pollc_push_back(poll_collect_t *pollc, client_socket new);
 int create_poll(serv_core_t *server);
+int read_data(int sender, char *buffer);
 
 int server_shutdown(serv_core_t *server); // MAY GO STATIC
 int server_startup(void);
