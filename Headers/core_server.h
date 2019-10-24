@@ -37,7 +37,7 @@
 // versions
 #define SERVER_MAJOR 0
 #define SERVER_MINOR 3
-#define SERVER_PATCH 0
+#define SERVER_PATCH 1
 
 // str to send to clients
 #define CONNECTION_SUCCESSFUL "Sucessfully established a connection.\n"
