@@ -102,6 +102,10 @@ static int run_server(serv_core_t *server)
 		}
 		if (ret_value > 0) {
 			ret_value = handle_socket(server);
+			if (ret_value == 0) {
+				output_logs_str(PREFIX_WARNING, "Client disconnected.\n");
+				return ret_value;
+			}
 		}
 		if (ret_value < 0) {
 			output_logs_str(PREFIX_ERROR, "Got an error, code %d.\n", ret_value);
