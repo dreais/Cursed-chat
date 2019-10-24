@@ -40,9 +40,7 @@ int create_poll(serv_core_t *server)
 
 int pollc_push_back(poll_collect_t *pollc, client_socket new)
 {
-	poll_collect_t tmp_collector;
 	char *new_addr = inet_ntoa(new.socket_name.sin_addr);
-	char connected[] = "CONNECTED\n";
 
 	if (new_addr == NULL) {
 		return 1;

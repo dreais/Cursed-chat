@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <poll.h>
+#include <signal.h>
 #include "../../Headers/core_server.h"
 
 #ifdef _WIN32 // winsock_initialize for windows
@@ -25,6 +26,15 @@ static int winsock_initialize(void)
 	return result;
 }
 #endif
+
+static bool emergency_stop = false;
+
+static void handle_sigint(int sig)
+{
+	output_logs_str(PREFIX_ERROR, "Got a SIGINT signal - emergency stop.\n");
+	fprintf(stderr, "Stopping server\n");
+	emergency_stop = true;
+}
 
 static int server_socket_initialize(serv_core_t *server)
 {
@@ -53,28 +63,33 @@ static int server_socket_initialize(serv_core_t *server)
 static int handle_socket(serv_core_t *server)
 {
 	client_socket new;
-	int result;
+	int result = 0;
 
 	if (server->fd_pool.fds[0].revents & POLLIN) { // data is ready to read from the server
 		new.fd = accept(server->fd_pool.fds[0].fd, (struct sockaddr *) &new.socket_name, &new.addr_len);
 		result = pollc_push_back(&server->fd_pool, new);
+		output_logs_str(PREFIX_DEBUG, "New connection on %s\n.", server->fd_pool.name[server->fd_pool.fds_n - 1]);
+		return result;
 	}
-	return 0;
+	return result;
 }
 
 static int run_server(serv_core_t *server)
 {
 	int ret_value;
 
-	while (server->stop_server == false) {
+	while (emergency_stop == false && server->stop_server == false) {
 		ret_value = poll(server->fd_pool.fds, server->fd_pool.fds_n, 5);
-		if (ret_value == -1) {
+		if (emergency_stop == false && ret_value == -1) {
 			output_logs_str(PREFIX_ERROR, "Poll failed, returning %d.\n", ret_value);
 			return ret_value;
 		}
 		if (ret_value > 0) {
 			ret_value = handle_socket(server);
 		}
+	}
+	if (emergency_stop == true) {
+		return 1;
 	}
 	return 0;
 }
@@ -87,6 +102,7 @@ int server_startup(void)
 #ifdef _WIN32
 	winsock_initialize();
 #endif
+	signal(SIGINT, handle_sigint);
 	result = server_socket_initialize(&server);
 	if (result > 0) {
 		output_logs_str(PREFIX_ERROR, "server_socket_initialize failed and returned %d. Exiting.\n", result);

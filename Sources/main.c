@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "../Headers/core_server.h"
 
 int main(void)

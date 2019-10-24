@@ -87,6 +87,7 @@ void output_logs_str(const char prefix[], const char str[], ...)
 
 void close_file(void)
 {
+	fflush(output);
 	fclose(output);
 }
 
