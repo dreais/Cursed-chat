@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "../Headers/log_file.h"
+
 static FILE *output;
 
 static const char format_specifier[7][4] = {
@@ -94,7 +96,7 @@ void close_file(void)
 
 void get_log_file(void)
 {
-	char log_path[] = "output.log";
+	char log_path[] = LOG_NAME;
 
 	output = fopen(log_path, "w+");
 	if (output == NULL) {

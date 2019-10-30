@@ -10,6 +10,8 @@
 #define PREFIX_WARNING "[WARNING] "
 #define PREFIX_ERROR "[ERROR] "
 
+#define LOG_NAME "output.log"
+
 void output_logs_str(const char prefix[], const char str[], ...)__attribute__((format(printf,2, 3)));
 void close_file(void);
 void get_log_file(void);
