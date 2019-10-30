@@ -7,12 +7,37 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include "../../Headers/log_file.h"
 #include "../../Headers/core_client.h"
 
+static int submit_nickname(user_t *user)
+{
+	char *protocol;
+
+	read(STDIN_FILENO, user->nickname, MAX_NICK_LENGTH);
+	for (int i = 0; i < MAX_NICK_LENGTH; i++) {
+		if (user->nickname[i] == '\n') {
+			user->nickname[i] = '\0';
+			break;
+		}
+	}
+	protocol = malloc(sizeof(char) * (strlen(PROTOC_NICK) + strlen(user->nickname)) + 1);
+	protocol[strlen(PROTOC_NICK) + strlen(user->nickname)] = '\0';
+	strcat(protocol, PROTOC_NICK);
+	strcat(protocol, user->nickname);
+	output_logs_str(PREFIX_INFO, "PROTOCOL NICK SENT WITH %s AS VALUE\n", user->nickname);
+	write(user->serv_sock, protocol, strlen(protocol));
+	return 0;
+}
+
 int client_run(int client_s)
 {
-	
+	user_t user = {.serv_sock = client_s};
+
+	submit_nickname(&user);
 	return 0;
 }
 

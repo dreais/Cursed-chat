@@ -9,4 +9,7 @@
 int inet_pton(int af, const char *src, char *dst);
 #endif
 
+// protocols
+#define PROTOC_NICK "NICKNAME:"
+
 #endif //CURSED_CHAT_SHARED_HEADER_H
