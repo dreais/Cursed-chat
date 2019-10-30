@@ -19,12 +19,14 @@
 #define CLIENT_PATCH 0
 
 #define MAX_NICK_LENGTH 25
+#define MAX_MSG_LENGTH	256
 
 
 /** --------------------------- */
 
 typedef struct {
 	char nickname[MAX_NICK_LENGTH];
+	char mesg[MAX_MSG_LENGTH];
 	int serv_sock;
 } user_t;
 
