@@ -32,7 +32,7 @@ static bool emergency_stop = false;
 static void handle_sigint(int sig __attribute__((unused)))
 {
 	output_logs_str(PREFIX_ERROR, "Got a SIGINT signal - emergency stop.\n");
-	fprintf(stderr, "Stopping server\n");
+	fprintf(stderr, "\nStopping server\n");
 	emergency_stop = true;
 }
 
@@ -60,6 +60,20 @@ static int server_socket_initialize(serv_core_t *server)
 	return 0;
 }
 
+static void socket_pop(serv_core_t *server, const unsigned int index)
+{
+	shutdown(server->fd_pool.fds[index].fd, 2);
+	close(server->fd_pool.fds[index].fd);
+	free(server->fd_pool.name[index]);
+	if ((unsigned int) index < (server->fd_pool.fds_n - 1)) { // don't count the server's socket
+		for (unsigned int i = index; i < (server->fd_pool.fds_n - 1); i++) {
+			server->fd_pool.fds[i] = server->fd_pool.fds[i + 1];
+			server->fd_pool.name[i] = server->fd_pool.name[i + 1];
+		}
+	}
+	server->fd_pool.fds_n--;
+}
+
 static int handle_socket(serv_core_t *server)
 {
 	client_socket new;
@@ -81,6 +95,7 @@ static int handle_socket(serv_core_t *server)
 				return result;
 			} else if (result == 0) {
 				output_logs_str(PREFIX_WARNING, "Client disconnected.\n");
+				socket_pop(server, i);
 				return result;
 			}
 			printf("%sMessage received: %s\n", SERVER_NAME, buffer);
@@ -102,10 +117,6 @@ static int run_server(serv_core_t *server)
 		}
 		if (ret_value > 0) {
 			ret_value = handle_socket(server);
-			if (ret_value == 0) {
-				output_logs_str(PREFIX_WARNING, "Client disconnected.\n");
-				return ret_value;
-			}
 		}
 		if (ret_value < 0) {
 			output_logs_str(PREFIX_ERROR, "Got an error, code %d.\n", ret_value);

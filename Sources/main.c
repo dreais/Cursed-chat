@@ -7,6 +7,7 @@ int main(int argc __attribute__((unused)), char **argv __attribute__((unused)))
 {
 	get_log_file();
 	if (argc == 1) {
+		printf("Opening logfile named %s\n", LOG_NAME);
 		output_logs_str(PREFIX_INFO, "Server mode of Cursed chat.\n");
 		output_logs_str(PREFIX_INFO, "Running server version %d.%d.%d\n", SERVER_MAJOR, SERVER_MINOR, SERVER_PATCH);
 		server_startup();
